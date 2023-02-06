@@ -26,7 +26,7 @@ pip3 install -r requirements.txt
 3. Using this tool to convert it to markdown files
 
 ```bash
-python3 yuque2markdown.py -i /path/to/your/lakebook/file -o /path/to/your/output/folder
+python3 yuque2markdown.py /path/to/your/lakebook/file.lakefile /path/to/your/output/folder
 ```
 
 
