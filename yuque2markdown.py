@@ -6,6 +6,7 @@ import shutil
 import sys
 import argparse
 import tarfile
+from markdownify import markdownify as md
 
 import yaml
 
@@ -30,21 +31,20 @@ def sanitizer_file_name(name):
 def read_toc(random_tmp_dir):
     # open meta json
     f = open(os.path.join(random_tmp_dir, META_JSON), 'r')
-    metaFileStr = json.loads(f.read())
-    metaStr = metaFileStr.get('meta', '')
-    meta = json.loads(metaStr)
-    tocStr = meta.get('book', {}).get('tocYml', '')
-    toc = yaml.unsafe_load(tocStr)
+    meta_file_str = json.loads(f.read())
+    meta_str = meta_file_str.get('meta', '')
+    meta = json.loads(meta_str)
+    toc_str = meta.get('book', {}).get('tocYml', '')
+    toc = yaml.unsafe_load(toc_str)
     f.close()
     return toc
 
 
 def extract_repos(repo_dir, output, toc):
-    desiredLevel = 0
+    desired_level = 0
     path_prefixed = []
     for item in toc:
         t = item['type']
-        slug = str(item.get('slug', ''))
         url = str(item.get('url', ''))
         level = item.get('level', 0)
         title = str(item.get('title', ''))
@@ -53,28 +53,27 @@ def extract_repos(repo_dir, output, toc):
             continue
         while True:
             if os.path.exists(os.path.join(output, sanitized_title)):
-                sanitized_title = sanitized_title + str(random.randint(0, 1000))
+                sanitized_title = sanitizer_file_name(str(title)) + str(random.randint(0, 1000))
             break
 
-        if t == "TITLE":
-            if level != desiredLevel:
-                if level > desiredLevel:
-                    path_prefixed = path_prefixed + [sanitized_title]
-                else:
-                    path_prefixed = path_prefixed[0:-1]
-                desiredLevel = level
-        elif t == "DOC":
+        if level > desired_level:
+            path_prefixed = path_prefixed + [sanitized_title]
+        elif level < desired_level:
+            path_prefixed = path_prefixed[0:-1]
+        # else:
+        desired_level = level
+        if t == "DOC":
             output_dir_path = os.path.join(output, *path_prefixed)
             if not os.path.exists(output_dir_path):
                 os.makedirs(output_dir_path)
-            rawPath = os.path.join(repo_dir, url + '.json')
-            rawFile = open(rawPath, 'r')
-            docStr = json.loads(rawFile.read())
-            html = docStr['doc']['body']
+            raw_path = os.path.join(repo_dir, url + '.json')
+            raw_file = open(raw_path, 'r')
+            doc_str = json.loads(raw_file.read())
+            html = doc_str['doc']['body']
 
-            output_path = os.path.join(output_dir_path, sanitized_title + '.html')
+            output_path = os.path.join(output_dir_path, sanitized_title + '.md')
             f = open(output_path, 'w')
-            f.write(html)
+            f.write(md(html))
 
 
 def main():
@@ -94,11 +93,11 @@ def main():
     # detect only one directory in random_tmp_dir
     repo_dir = ""
     for root, dirs, files in os.walk(random_tmp_dir):
-        for dir in dirs:
-            repo_dir = os.path.join(random_tmp_dir, dir)
+        for d in dirs:
+            repo_dir = os.path.join(random_tmp_dir, d)
             break
     if not repo_dir:
-        print('Lakebook file is invalid')
+        print('.lakebook file is invalid')
         sys.exit(1)
 
     toc = read_toc(repo_dir)

@@ -32,5 +32,5 @@ python3 yuque2markdown.py -i /path/to/your/lakebook/file -o /path/to/your/output
 
 ## TODO
 
-1. [ ] Convert HTML to markdown
-2. [ ] Fetch images
+- [x] Convert HTML to markdown
+- [ ] Fetch images
