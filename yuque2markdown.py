@@ -10,6 +10,10 @@ from markdownify import markdownify as md
 
 import yaml
 
+TYTE_TITLE = "TITLE"
+
+TYPE_DOC = "DOC"
+
 META_JSON = '$meta.json'
 TMP_DIR = '/tmp'
 
@@ -41,12 +45,13 @@ def read_toc(random_tmp_dir):
 
 
 def extract_repos(repo_dir, output, toc):
-    desired_level = 0
+    last_level = 0
+    last_sanitized_title = ''
     path_prefixed = []
     for item in toc:
         t = item['type']
         url = str(item.get('url', ''))
-        level = item.get('level', 0)
+        current_level = item.get('level', 0)
         title = str(item.get('title', ''))
         sanitized_title = sanitizer_file_name(str(title))
         if not title:
@@ -56,24 +61,44 @@ def extract_repos(repo_dir, output, toc):
                 sanitized_title = sanitizer_file_name(str(title)) + str(random.randint(0, 1000))
             break
 
-        if level > desired_level:
-            path_prefixed = path_prefixed + [sanitized_title]
-        elif level < desired_level:
-            path_prefixed = path_prefixed[0:-1]
+        if current_level > last_level:
+            path_prefixed = path_prefixed + [last_sanitized_title]
+        elif current_level < last_level:
+            diff = last_level - current_level
+            path_prefixed = path_prefixed[0:-diff]
+
         # else:
-        desired_level = level
-        if t == "DOC":
+        if t == TYPE_DOC:
             output_dir_path = os.path.join(output, *path_prefixed)
             if not os.path.exists(output_dir_path):
                 os.makedirs(output_dir_path)
             raw_path = os.path.join(repo_dir, url + '.json')
             raw_file = open(raw_path, 'r')
             doc_str = json.loads(raw_file.read())
-            html = doc_str['doc']['body']
+            html = doc_str['doc']['body'] or doc_str['doc']['body_asl']
 
             output_path = os.path.join(output_dir_path, sanitized_title + '.md')
             f = open(output_path, 'w')
-            f.write(md(html))
+            f.write(pretty_md(md(html)))
+
+        last_sanitized_title = sanitized_title
+        last_level = current_level
+
+
+def pretty_md(text: str) -> str:
+    output = text
+
+    lines = output.split('\n')
+    for i in range(len(lines)):
+        lines[i] = lines[i].rstrip()
+    output = '\n'.join(lines)
+
+    for i in range(50):
+        output = output.replace('\n\n\n', '\n\n')
+        if '\n\n\n' not in output:
+            break
+
+    return output
 
 
 def main():

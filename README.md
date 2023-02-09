@@ -2,7 +2,8 @@
 
 > status: working in progress
 
-Simple convertor, it converts `.lakebook` to markdown files.
+Simple convertor, it converts `.lakebook` to markdown files, and all the outputs is in `markdown` format.
+The structure of the output folder is the same as the structure of the book in yuque.
 
 ## How to install
 
@@ -19,7 +20,7 @@ pip3 install -r requirements.txt
 ```
 
 
-## How to convert
+## How to use
 
 1. Go to your yuque book configuration page, click `设置` button
 2. Click `导出` button, and download the `.lakebook` file
@@ -27,8 +28,10 @@ pip3 install -r requirements.txt
 
 ```bash
 python3 yuque2markdown.py /path/to/your/lakebook/file.lakefile /path/to/your/output/folder
-```
 
+# show your converted files
+tree /path/to/your/output/folder
+```
 
 ## TODO
 
