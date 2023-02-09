@@ -75,14 +75,30 @@ def extract_repos(repo_dir, output, toc):
             raw_path = os.path.join(repo_dir, url + '.json')
             raw_file = open(raw_path, 'r')
             doc_str = json.loads(raw_file.read())
-            html = doc_str['doc']['body']
+            html = doc_str['doc']['body'] or doc_str['doc']['body_asl']
 
             output_path = os.path.join(output_dir_path, sanitized_title + '.md')
             f = open(output_path, 'w')
-            f.write(md(html))
+            f.write(pretty_md(md(html)))
 
         last_sanitized_title = sanitized_title
         last_level = current_level
+
+
+def pretty_md(text: str) -> str:
+    output = text
+
+    lines = output.split('\n')
+    for i in range(len(lines)):
+        lines[i] = lines[i].rstrip()
+    output = '\n'.join(lines)
+
+    for i in range(50):
+        output = output.replace('\n\n\n', '\n\n')
+        if '\n\n\n' not in output:
+            break
+
+    return output
 
 
 def main():
