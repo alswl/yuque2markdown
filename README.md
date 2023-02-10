@@ -36,4 +36,5 @@ tree /path/to/your/output/folder
 ## TODO
 
 - [x] Convert HTML to markdown
+- [x] Toc structed convert
 - [ ] Fetch images
