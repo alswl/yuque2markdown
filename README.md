@@ -1,6 +1,6 @@
 # yuque-to-markdown
 
-> status: working in progress
+> status: it works
 
 Simple convertor, it converts `.lakebook` to markdown files, and all the outputs is in `markdown` format.
 The structure of the output folder is the same as the structure of the book in yuque.
