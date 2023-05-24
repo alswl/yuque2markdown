@@ -27,7 +27,7 @@ pip3 install -r requirements.txt
 3. Using this tool to convert it to markdown files
 
 ```bash
-python3 yuque2markdown.py /path/to/your/lakebook/file.lakefile /path/to/your/output/folder
+python3 yuque2markdown.py /path/to/your/lakebook/file.lakefile /path/to/your/output/folder --download-image
 
 # show your converted files
 tree /path/to/your/output/folder
@@ -37,4 +37,4 @@ tree /path/to/your/output/folder
 
 - [x] Convert HTML to markdown
 - [x] Toc structed convert
-- [ ] Fetch images
+- [x] Fetch images

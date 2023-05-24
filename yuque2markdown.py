@@ -7,6 +7,8 @@ import sys
 import argparse
 import tarfile
 from markdownify import markdownify as md
+from bs4 import BeautifulSoup
+from requests import get
 
 import yaml
 
@@ -16,6 +18,13 @@ TYPE_DOC = "DOC"
 
 META_JSON = '$meta.json'
 TMP_DIR = '/tmp'
+
+content_type_to_extension = {
+    'image/gif': '.gif',
+    'image/jpeg': '.jpg',
+    'image/svg+xml': '.svg',
+    'image/png': '.png',
+}
 
 
 def sanitizer_file_name(name):
@@ -44,7 +53,7 @@ def read_toc(random_tmp_dir):
     return toc
 
 
-def extract_repos(repo_dir, output, toc):
+def extract_repos(repo_dir, output, toc, download_image):
     last_level = 0
     last_sanitized_title = ''
     path_prefixed = []
@@ -58,7 +67,8 @@ def extract_repos(repo_dir, output, toc):
             continue
         while True:
             if os.path.exists(os.path.join(output, sanitized_title)):
-                sanitized_title = sanitizer_file_name(str(title)) + str(random.randint(0, 1000))
+                sanitized_title = sanitizer_file_name(
+                    str(title)) + str(random.randint(0, 1000))
             break
 
         if current_level > last_level:
@@ -77,12 +87,43 @@ def extract_repos(repo_dir, output, toc):
             doc_str = json.loads(raw_file.read())
             html = doc_str['doc']['body'] or doc_str['doc']['body_asl']
 
-            output_path = os.path.join(output_dir_path, sanitized_title + '.md')
+            if download_image:
+                html = download_image_replace_path(
+                    output_dir_path, sanitized_title, html)
+
+            output_path = os.path.join(
+                output_dir_path, sanitized_title + '.md')
             f = open(output_path, 'w')
-            f.write(pretty_md(md(html)))
+            f.write(pretty_md(md(html, heading_style='ATX')))
 
         last_sanitized_title = sanitized_title
         last_level = current_level
+
+
+def download_image_replace_path(output_dir_path, sanitized_title, html):
+    bs = BeautifulSoup(html, 'html.parser')
+    if len(bs.find_all('img')) > 0:
+        attachments_dir_path = os.path.join(
+            output_dir_path, 'attachments')
+        if not os.path.exists(attachments_dir_path):
+            os.mkdir(attachments_dir_path)
+        no = 1
+        for image in bs.find_all("img"):
+            print('Download %s' % image['src'])
+            resp = get(image['src'])
+            file_name = sanitized_title + \
+                '_%03d%s' % (no, content_type_to_extension.get(
+                    resp.headers["Content-Type"], ''))
+            attachments_file_path = os.path.join(
+                attachments_dir_path, file_name)
+            with open(attachments_file_path, 'wb') as f:
+                f.write(resp.content)
+            no = no + 1
+            image['src'] = './attachments/' + file_name
+        html = str(bs)
+        return html
+    else:
+        return html
 
 
 def pretty_md(text: str) -> str:
@@ -102,9 +143,12 @@ def pretty_md(text: str) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Convert Yuque doc to markdown')
+    parser = argparse.ArgumentParser(
+        description='Convert Yuque doc to markdown')
     parser.add_argument('lakebook', help='Lakebook file')
     parser.add_argument('output', help='Output directory')
+    parser.add_argument(
+        '--download-image', help='If download images to local', action='store_true')
     args = parser.parse_args()
     if not os.path.exists(args.lakebook):
         print('Lakebook file not found: ' + args.lakebook)
@@ -129,7 +173,7 @@ def main():
     # print len of toc
     print('Total ' + str(len(toc)) + ' files')
 
-    extract_repos(repo_dir, args.output, toc)
+    extract_repos(repo_dir, args.output, toc, args.download_image)
 
     # remove tmp dir
     shutil.rmtree(random_tmp_dir)
