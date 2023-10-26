@@ -33,6 +33,23 @@ python3 yuque2markdown.py /path/to/your/lakebook/file.lakefile /path/to/your/out
 tree /path/to/your/output/folder
 ```
 
+CLI Description:
+
+```shell
+python yuque2markdown.py --help
+usage: yuque2markdown.py [-h] [--download-image] lakebook output
+
+Convert Yuque doc to markdown
+
+positional arguments:
+  lakebook          Lakebook file
+  output            Output directory
+
+options:
+  -h, --help        show this help message and exit
+  --download-image  Download images to local
+```
+
 ## TODO
 
 - [x] Convert HTML to markdown
