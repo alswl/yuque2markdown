@@ -50,6 +50,17 @@ options:
   --download-image  Download images to local
 ```
 
+## Tips
+
+Some wrong will ouccured if you have ever imported a unsanitizer markdwon file such as uploading failly.The console will prompt non-standard documents in red font, and you need to view them manually.
+
+> Download https://cdn.nlark.com/yuque/0/2024/png/72972370/xxx.png
+>Download /img/image-20231103130307622.png
+> <font color="#dd0000">Docx 'demo1' has a wrong img path, check it!</font>
+> Download https://cdn.nlark.com/yuque/0/2024/png/95472370/xxx.png
+> Download data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=
+> <font color="#dd0000">Docx 'demo2' has a wrong img path, check it!</font>
+
 ## TODO
 
 - [x] Convert HTML to markdown

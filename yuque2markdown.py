@@ -1,4 +1,5 @@
 # coding=utf-8
+import re
 import json
 import os
 import random
@@ -16,7 +17,8 @@ import yaml
 TYPE_TITLE = "TITLE"
 TYPE_DOC = "DOC"
 META_JSON = "$meta.json"
-TMP_DIR = "/tmp"
+# windows can't mkdir multi-level directory, empty tmp_dir can enhance compatibility
+TMP_DIR = ""
 
 DEFAULT_HEADING_STYLE = "ATX"
 
@@ -44,7 +46,7 @@ def sanitizer_file_name(name):
 
 def read_toc(random_tmp_dir):
     # open meta json
-    f = open(os.path.join(random_tmp_dir, META_JSON), "r")
+    f = open(os.path.join(random_tmp_dir, META_JSON), "r", encoding="utf-8")
     meta_file_str = json.loads(f.read())
     meta_str = meta_file_str.get("meta", "")
     meta = json.loads(meta_str)
@@ -85,7 +87,7 @@ def extract_repos(repo_dir, output, toc, download_image):
             if not os.path.exists(output_dir_path):
                 os.makedirs(output_dir_path)
             raw_path = os.path.join(repo_dir, url + ".json")
-            raw_file = open(raw_path, "r")
+            raw_file = open(raw_path, "r", encoding="utf-8")
             doc_str = json.loads(raw_file.read())
             html = doc_str["doc"]["body"] or doc_str["doc"]["body_asl"]
 
@@ -95,11 +97,16 @@ def extract_repos(repo_dir, output, toc, download_image):
                 )
 
             output_path = os.path.join(output_dir_path, sanitized_title + ".md")
-            f = open(output_path, "w")
+            f = open(output_path, "w", encoding="utf-8")
             f.write(pretty_md(md(html, heading_style=DEFAULT_HEADING_STYLE)))
 
         last_sanitized_title = sanitized_title
         last_level = current_level
+
+
+def is_valid_url(url):
+    pattern = re.compile(r"^(http|https|ftp)://[^\s/$.?#].[^\s]*$")
+    return bool(re.match(pattern, url))
 
 
 def download_images_and_patch_html(output_dir_path, sanitized_title, html):
@@ -111,6 +118,10 @@ def download_images_and_patch_html(output_dir_path, sanitized_title, html):
         no = 1
         for image in bs.find_all("img"):
             print("Download %s" % image["src"])
+            # check the url whether is valid, sometimes we import a wrong md so alert it to fix by handwrite.
+            if not is_valid_url(image["src"]):
+                print("\033[31mDocx '%s' has a wrong img path, check it!\033[0m" % sanitized_title)
+                continue
             resp = get(image["src"])
             file_name = sanitized_title + "_%03d%s" % (
                 no,
